@@ -1,5 +1,26 @@
 {% extends "network/layout.html" %}
+{% load static %}
 
 {% block body %}
-    TODO
+
+<div id="new-post">
+
+  <div class="container">
+    <textarea class="form-control" id="compose-body" name="post-body" 
+      placeholder="What's on your mind?"></textarea>
+    <input id="sendPost" type="submit" class="btn btn-primary" value="Post"/>
+  </div>
+
+</div>
+<div id="posts-view">
+  <!-- We need the form for creating the new post, as well as a list of posts. -->
+</div>
+<div id="profile-view">
+</div>
+
+{% endblock %}
+
+<!-- Hey there! Is this loading???? -->
+{% block script %}
+<script src="{% static 'network/index.js' %}"></script>
 {% endblock %}

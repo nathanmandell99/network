@@ -13,7 +13,7 @@ class Post(models.Model):
 
     def __str__(self):
         return f"Post by {self.user} on {self.timestamp}"
-    
+
 class Comment(models.Model):
     body = models.CharField(max_length=1024)
     user = models.ForeignKey("User", on_delete=models.CASCADE, related_name="comments")
