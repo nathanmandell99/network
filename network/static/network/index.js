@@ -18,3 +18,9 @@ btn.addEventListener("click", async () => {
   }
   // loadPosts();
 })
+
+function loadPosts() {
+  const postsView = document.querySelector("#posts-view");
+  // We need to: generate 10 posts per page, and separate into pages; 
+  // give ability to comment on each post.
+}
