@@ -1,3 +1,7 @@
 li a {
   color: blue;
 }
+
+.container.post {
+  border: 1px solid grey;
+}

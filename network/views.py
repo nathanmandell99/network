@@ -12,10 +12,12 @@ from .models import User, Post, Comment
 
 
 # For now we will assume this simply retrieves all posts.
+# Probably we will need to also give all the commends related to a post.
 def load_posts(request):
-    posts = Post.objects.all
+    posts = Post.objects.all()
+    print(posts)
     posts = posts.order_by("-timestamp").all()
-    return JsonResponse([posts.serialize() for post in posts], safe=False)
+    return JsonResponse([post.serialize() for post in posts], safe=False)
 
 
 # Takes either a Post or a Comment and saves it to the database.

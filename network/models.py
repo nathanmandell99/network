@@ -14,6 +14,14 @@ class Post(models.Model):
         "User", on_delete=models.CASCADE, related_name="posts")
     timestamp = models.DateTimeField(auto_now_add=True)
 
+    def serialize(self):
+        return {
+            "body": self.body,
+            "userID": self.user.id,
+            "userName": self.user.username,
+            "timestamp": self.timestamp
+        }
+
     def __str__(self):
         return f"Post by {self.user} on {self.timestamp}"
 
@@ -23,8 +31,18 @@ class Comment(models.Model):
     user = models.ForeignKey(
         "User", on_delete=models.CASCADE, related_name="comments")
     timestamp = models.DateTimeField(auto_now_add=True)
+    # Consider renaming this attribute to "parent_post"
     post = models.ForeignKey(
         "Post", on_delete=models.CASCADE, related_name="comments")
+
+    def serialize(self):
+        return {
+            "body": self.body,
+            "userID": self.user.id,
+            "userName": self.user.username,
+            "postID": self.post.id,
+            "timestamp": self.timestamp
+        }
 
     def __str__(self):
         return f"Comment by {self.user} on {self.post} on {self.timestamp}"
