@@ -1,13 +1,20 @@
-console.log("Hello, world!");
-console.log("Hello again, world!");
+const btn = document.querySelector("#sendPost");
 
+btn.addEventListener("click", async () => {
+  const postBody = document.querySelector("#compose-body").value;
+  // Async fetch
+  try {
+    response = await fetch('/newpost', {
+      method: 'POST',
+        body: JSON.stringify({
+          post_body: postBody
+        })
+    })
+    result = await response.json();
+    console.log(result);
 
-/* Somewhere in here, we'll have this:
-  fetch('/newPost', {
-    method: 'POST',
-      body: JSON.stringify({
-        postBody: "Making this post from the Firefox console..."
-      })
-  })
-	.then(response => response.json())
-	.then(result => console.log(result));*/
+  } catch (error) {
+    console.log(`Error: ${error}`)
+  }
+  // loadPosts();
+})

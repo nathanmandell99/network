@@ -16,18 +16,20 @@ from .models import User, Post, Comment
 def new_post(request):
     if request.method != "POST":
         return JsonResponse({"error": "POST request required."}, status=400)
-    
+
     data = json.loads(request.body)
     # Get contents of post
-    post_body = data.get("postBody")
+    post_body = data.get("post_body")
     if post_body is None:
-        # Return an error
-        pass
+        print("Post has no body. Returning error.")
+        return JsonResponse({"error": "Post must have a body (post_body)."},
+                            status=400)
 
     new_post = Post(user=request.user, body=post_body)
     new_post.save()
 
     return JsonResponse({"message": "New post received."}, status=201)
+
 
 def index(request):
     return render(request, "network/index.html")
