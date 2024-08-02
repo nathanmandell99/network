@@ -11,13 +11,28 @@ from django.views.decorators.csrf import csrf_exempt
 from .models import User, Post, Comment
 
 
+def posts_count(request):
+    count = Post.objects.all().count()
+    toReturn = {"count": count}
+    return JsonResponse(toReturn)
+
+
 # For now we will assume this simply retrieves all posts.
-# Probably we will need to also give all the commends related to a post.
+# Probably we will need to also give all the comments related to a post.
 def load_posts(request):
     posts = Post.objects.all()
-    print(posts)
     posts = posts.order_by("-timestamp").all()
-    return JsonResponse([post.serialize() for post in posts], safe=False)
+    start = int(request.GET.get("start") or 0)
+    end = int(request.GET.get("end") or start + 9)
+    if end + 1 > posts.count():
+        end = posts.count()
+
+    # print(f"end: {end + 1}, posts.count(): {posts.count()}")
+    toReturn = []
+    for post in posts[start:end+1]:
+        toReturn.append(post)
+
+    return JsonResponse([post.serialize() for post in toReturn], safe=False)
 
 
 # Takes either a Post or a Comment and saves it to the database.
@@ -49,6 +64,7 @@ def new_entry(request, post_id=None):
     # Save a new Comment
     else:
         post = Post.objects.get(pk=post_id)
+        # Confirm the Post we are making a Comment on exists.
         if post is not None:
             new_comment = Comment(user=request.user,
                                   body=entry_body, post=post)
