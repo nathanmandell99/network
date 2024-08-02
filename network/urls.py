@@ -13,6 +13,5 @@ urlpatterns = [
 
     path("newpost", views.new_entry, name="newpost"),
     path("newcomment/<int:post_id>", views.new_entry, name="newcomment"),
-    path("posts", views.load_posts, name="posts"),
-    path("postcount", views. posts_count, name="postcount")
+    path("posts", views.load_posts, name="posts")
 ]

@@ -32,7 +32,10 @@ def load_posts(request):
     for post in posts[start:end+1]:
         toReturn.append(post)
 
-    return JsonResponse([post.serialize() for post in toReturn], safe=False)
+    return JsonResponse(
+        {"posts": [post.serialize() for post in toReturn],
+         "totalCount": Post.objects.all().count()},
+        safe=False)
 
 
 # Takes either a Post or a Comment and saves it to the database.

@@ -74,38 +74,39 @@ class TestNewEntry(TestCase):
 # TODO: Write tests for load_posts() view
 
 
-# TODO: Write tests for posts_count() view
-class TestPostCount(TestCase):
-
-    def setUp(self):
-        self.client = Client()
-        self.user = User.objects.create(username="test_user")
-        self.user.set_password("password")
-        self.user.save()
-
-    def test_no_entries(self):
-        response = self.client.get("/postcount")
-        count = int(json.loads(response.content)['count'])
-        self.assertEqual(count, 0)
-
-    def test_entries(self):
-        internal_count = 0
-        for i in range(0, 10):
-            new_post = Post(user=self.user, body=f"Test post {i}")
-            new_post.save()
-            internal_count += 1
-
-        response = self.client.get("/postcount")
-        count1 = int(json.loads(response.content)['count'])
-        self.assertEqual(count1, internal_count)
-        self.assertEqual(count1, Post.objects.all().count())
-
-        for i in range(10, 15):
-            new_post = Post(user=self.user, body=f"Test post {i}")
-            new_post.save()
-            internal_count += 1
-
-        response = self.client.get("/postcount")
-        count2 = int(json.loads(response.content)['count'])
-        self.assertEqual(count2, internal_count)
-        self.assertEqual(count2, Post.objects.all().count())
+# We are going to dump this route. That said since the functionality
+# was moved to load_posts we can reuse some of these tests;
+# class TestPostCount(TestCase):
+#
+#     def setUp(self):
+#         self.client = Client()
+#         self.user = User.objects.create(username="test_user")
+#         self.user.set_password("password")
+#         self.user.save()
+#
+#     def test_no_entries(self):
+#         response = self.client.get("/postcount")
+#         count = int(json.loads(response.content)['count'])
+#         self.assertEqual(count, 0)
+#
+#     def test_entries(self):
+#         internal_count = 0
+#         for i in range(0, 10):
+#             new_post = Post(user=self.user, body=f"Test post {i}")
+#             new_post.save()
+#             internal_count += 1
+#
+#         response = self.client.get("/postcount")
+#         count1 = int(json.loads(response.content)['count'])
+#         self.assertEqual(count1, internal_count)
+#         self.assertEqual(count1, Post.objects.all().count())
+#
+#         for i in range(10, 15):
+#             new_post = Post(user=self.user, body=f"Test post {i}")
+#             new_post.save()
+#             internal_count += 1
+#
+#         response = self.client.get("/postcount")
+#         count2 = int(json.loads(response.content)['count'])
+#         self.assertEqual(count2, internal_count)
+#         self.assertEqual(count2, Post.objects.all().count())
