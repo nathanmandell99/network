@@ -7,34 +7,24 @@ from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
+from django.core.paginator import Paginator
 
 from .models import User, Post, Comment
 
 
-def posts_count(request):
-    count = Post.objects.all().count()
-    toReturn = {"count": count}
-    return JsonResponse(toReturn)
-
-
-# For now we will assume this simply retrieves all posts.
+# It shouldn't be hard to refactor this to support only returning
+# posts from accounts a user follows, or only from a given account.
 # Probably we will need to also give all the comments related to a post.
 def load_posts(request):
     posts = Post.objects.all()
     posts = posts.order_by("-timestamp").all()
-    start = int(request.GET.get("start") or 0)
-    end = int(request.GET.get("end") or start + 9)
-    if end + 1 > posts.count():
-        end = posts.count()
-
-    # print(f"end: {end + 1}, posts.count(): {posts.count()}")
-    toReturn = []
-    for post in posts[start:end+1]:
-        toReturn.append(post)
+    paginator = Paginator(posts, 10)
+    page_number = int(request.GET.get("page") or 1)
+    page_obj = paginator.get_page(page_number)
 
     return JsonResponse(
-        {"posts": [post.serialize() for post in toReturn],
-         "totalCount": Post.objects.all().count()},
+        {"posts": [post.serialize() for post in page_obj.object_list],
+         "totalCount": posts.count()},
         safe=False)
 
 

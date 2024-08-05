@@ -5,3 +5,15 @@ li a {
 .container.post {
   border: 1px solid grey;
 }
+
+#posts-view {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  max-height: 10px;
+}
+
+#pagination {
+  display: flex;
+  flex-wrap: wrap;
+}

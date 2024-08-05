@@ -6,6 +6,8 @@ import json
 from .models import User, Post  # , Comment
 
 
+# We could maybe clean this up by logging in during setUp and logging
+# out for the authentication test
 class TestNewEntry(TestCase):
 
     def setUp(self):
@@ -32,6 +34,7 @@ class TestNewEntry(TestCase):
         self.assertTrue(json.loads(response.content)['error'])
 
     def test_authentication_required(self):
+        self.client.logout()
 
         response = self.client.post("/newpost",
                                     {"entry_body": "Test!"},
@@ -71,42 +74,66 @@ class TestNewEntry(TestCase):
 
         self.assertEqual(response1.status_code, 201)
 
-# TODO: Write tests for load_posts() view
 
+class TestLoadPosts(TestCase):
 
-# We are going to dump this route. That said since the functionality
-# was moved to load_posts we can reuse some of these tests;
-# class TestPostCount(TestCase):
-#
-#     def setUp(self):
-#         self.client = Client()
-#         self.user = User.objects.create(username="test_user")
-#         self.user.set_password("password")
-#         self.user.save()
-#
-#     def test_no_entries(self):
-#         response = self.client.get("/postcount")
-#         count = int(json.loads(response.content)['count'])
-#         self.assertEqual(count, 0)
-#
-#     def test_entries(self):
-#         internal_count = 0
-#         for i in range(0, 10):
-#             new_post = Post(user=self.user, body=f"Test post {i}")
-#             new_post.save()
-#             internal_count += 1
-#
-#         response = self.client.get("/postcount")
-#         count1 = int(json.loads(response.content)['count'])
-#         self.assertEqual(count1, internal_count)
-#         self.assertEqual(count1, Post.objects.all().count())
-#
-#         for i in range(10, 15):
-#             new_post = Post(user=self.user, body=f"Test post {i}")
-#             new_post.save()
-#             internal_count += 1
-#
-#         response = self.client.get("/postcount")
-#         count2 = int(json.loads(response.content)['count'])
-#         self.assertEqual(count2, internal_count)
-#         self.assertEqual(count2, Post.objects.all().count())
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create(username="test_user")
+        self.user.set_password("password")
+        self.user.save()
+        self.internal_count = 0
+
+    def test_no_entries(self):
+        response = self.client.get("/posts")
+        result = json.loads(response.content)
+        count = int(result['totalCount'])
+        self.assertEqual(count, 0)
+        self.assertEqual(result['posts'], [])
+
+    def test_page_1(self):
+        for i in range(0, 10):
+            new_post = Post(user=self.user, body=f"Test post {i}")
+            new_post.save()
+            self.internal_count += 1
+
+        response = self.client.get("/posts?page=1")
+        result = json.loads(response.content)
+        count = int(result['totalCount'])
+        self.assertEqual(count, self.internal_count)
+        self.assertEqual(count, Post.objects.all().count())
+
+        for i in range(0, 10):
+            # cur_post uses 10-i because the sqlite ids are not 0-indexed
+            cur_post = Post.objects.get(pk=(10-i))
+            self.assertEqual(result['posts'][i]['body'],
+                             cur_post.serialize()['body'])
+
+    def test_page_2(self):
+        self.test_page_1()
+
+        for i in range(10, 20):
+            new_post = Post(user=self.user, body=f"Test post {i}")
+            new_post.save()
+            self.internal_count += 1
+
+        # Page 2 should be the same as page 1 was before we added
+        # the new Posts.
+        response = self.client.get("/posts?page=2")
+        result = json.loads(response.content)
+        count = int(result['totalCount'])
+        self.assertEqual(count, self.internal_count)
+        self.assertEqual(count, Post.objects.all().count())
+
+        for i in range(0, 10):
+            cur_post = Post.objects.get(pk=(10-i))
+            self.assertEqual(result['posts'][i]['body'],
+                             cur_post.serialize()['body'])
+
+        response = self.client.get("/posts?page=1")
+        result = json.loads(response.content)
+
+        for i in range(0, 10):
+            cur_post = Post.objects.get(pk=(20-i))
+            self.assertEqual(result['posts'][i]['body'],
+                             cur_post.serialize()['body'])

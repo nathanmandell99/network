@@ -10,10 +10,20 @@ catch (error) {
 displayPage(1);
 
 function displayPost(view, post) {
-  let postHTML = `<div class="container post">
+  /*let postHTML = `<div class="container post">
                     <h5>Post by ${post['userName']} on ${post['timestamp']}</h5>
                     <p>${post['body']}</p>
-                    </div>`;
+                    </div>`;*/
+  let postHTML = `
+    <div class="card" style="width: 18rem;">
+      <div class="card-body">
+        <h5 class="card-title">${post['userName']}</h5>
+        <h6 class="card-subtitle mb-2 text-body-secondary">${post['timestamp']}</h6>
+        <p class="card-text">${post['body']}</p>
+        <a href="#" class="card-link">Likes: </a>
+        <a href="#" class="card-link">Like Post</a>
+      </div>
+    </div>`
   view.innerHTML += postHTML;
 
 }
@@ -25,14 +35,11 @@ async function displayPage(page) {
 
   try {
     // Get the posts:
-    let start = (page - 1) * 10;
-    let end = start + 9;
-    response = await fetch(`/posts?start=${start}&end=${end}`);
+    response = await fetch(`/posts?page=${page}`);
     result = await response.json();
     console.log(result);
 
-    let count = parseInt(result['totalCount']);
-    let totalPages = Math.ceil(count / 10);
+    let totalPages = Math.ceil(parseInt(result['totalCount']) / 10);
 
     let posts = result['posts']
     for (let post of posts) {
@@ -40,6 +47,7 @@ async function displayPage(page) {
     }
 
     if (totalPages > 1) {
+      // We need to display a 'next' and a 'previous' button
       getPagination(postsView, page, totalPages);
     }
   }
@@ -50,66 +58,53 @@ async function displayPage(page) {
 
 }
 
-// This is a HEAVY work in progress. Will probably completely
-// refactor.
 function getPagination(view, page, totalPages) {
   // console.log(`In getPagination funct with page #${page}`)
+  // Set up the innerHTML; if we're on the first or last page,
+  // add the disabed class to prev or next respectively
+
+  view.innerHTML += `
+  <nav aria-label="...">
+    <ul class="pagination">
+      <li class="page-item" id="prev">
+        <a class="page-link" href="#">Previous</a>
+      </li>
+      <li class="page-item" id="next">
+        <a class="page-link" href="#">Next</a>
+      </li>
+    </ul>
+  </nav>`
+
+  console.log(`Getting pagination for page ${page}, with ${totalPages} total pages`)
+  let next = document.querySelector("#next");
+  let prev = document.querySelector("#prev");
   if (page == 1) {
-    // Display pagination with no previous option, and page 1 highlighted.
-    view.innerHTML += `
-    <nav aria-label="...">
-      <ul class="pagination">
-        <li class="page-item disabled">
-          <span class="page-link">Previous</span>
-        </li>
-        <li class="page-item active" aria-current="page">
-          <span class="page-link" href="#">1</span></li>
-        <li class="page-item" id="second">
-          <a class="page-link" href="">2</a></li>`
-
-    if (totalPages > 2) {
-      view.innerHTML += `
-        <li class="page-item" id="third">
-          <a class="page-link" href="">3</a></li>`
-    }
-
-    view.innerHTML += `
-        <li class="page-item">
-          <a class="page-link" id="next-page" href="#">Next</a>
-        </li>
-      </ul>
-    </nav>`
-
-    let next = document.querySelector("#next-page");
+    prev.classList.add("disabled");
     next.addEventListener('click', (event) => {
-      event.preventDefault();
+      // event.preventDefault();
       displayPage(page + 1);
     })
-    let two = document.querySelector('#second');
-    two.addEventListener('click', (event) => {
-      event.preventDefault();
-      displayPage(2);
-    })
-
   }
+  else if (page == totalPages) {
+    next.classList.add("disabled");
+    prev.addEventListener('click', (event) => {
+      // event.preventDefault();
+      displayPage(page - 1);
+    })
+  }
+  else {
+    next.addEventListener('click', (event) => {
+      // event.preventDefault();
+      displayPage(page + 1);
+    })
+    prev.addEventListener('click', (event) => {
+      // event.preventDefault();
+      displayPage(page - 1);
+    })
+  }
+
 
 }
-
-/*async function getPostsForPage(page) {
-  // console.log(`Getting page ${page}`)
-  try {
-    response = await fetch(`/posts?start=${start}&end=${end}`);
-    // console.log(`Received response from backend: ${response}`);
-    result = await response.json();
-    console.log(result);
-    posts = result['posts']
-    return posts;
-  }
-  catch (error) {
-    console.log(`Error: ${error}`);
-    return null;
-  }
-}*/
 
 async function sendPost() {
   const postForm = document.querySelector("#compose-body");
