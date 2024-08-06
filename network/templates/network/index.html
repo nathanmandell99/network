@@ -23,6 +23,17 @@
 <div id="profile-view">
 </div>
 
+{% if request.user.is_authenticated %}
+  <script>
+    let userID = {{ request.user.id }}
+    console.log(`User ID: ${userID}`)
+  </script>
+{% else %}
+  <script>
+    let userID = -1;
+    console.log(`User ID: ${userID}`);
+  </script>
+{% endif %}
 {% block script %}
 <script src="{% static 'network/index.js' %}"></script>
 {% endblock %}

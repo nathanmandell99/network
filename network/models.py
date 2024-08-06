@@ -14,13 +14,19 @@ class Post(models.Model):
         "User", on_delete=models.CASCADE, related_name="posts")
     timestamp = models.DateTimeField(auto_now_add=True)
 
-    # TODO: Also return number of likes
     def serialize(self):
+        likesQuery = self.likers.all()
+        likers = []
+        for user in likesQuery:
+            likers.append(user.id)
+
         return {
+            "id": self.id,
             "body": self.body,
             "userID": self.user.id,
             "userName": self.user.username,
-            "timestamp": self.timestamp
+            "timestamp": f"{self.timestamp.month}/{self.timestamp.day}/{self.timestamp.year}, {self.timestamp.time().strftime("%H:%M")}",
+            "likes": likers
         }
 
     def __str__(self):

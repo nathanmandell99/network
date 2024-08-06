@@ -12,6 +12,26 @@ from django.core.paginator import Paginator
 from .models import User, Post, Comment
 
 
+# Get all of the user's likes. If the Post is already there, remove it.
+# Otherwise, add it.
+@csrf_exempt
+@login_required
+def likepost(request, post_id):
+    post = Post.objects.get(pk=post_id)
+    if post is not None:
+        # If the user already likes the Post, unlike it.
+        if post in request.user.likes.all():
+            request.user.likes.remove(post)
+            return JsonResponse({"message": "Post unliked."}, status=201)
+
+        # Otherwise, like it.
+        else:
+            request.user.likes.add(post)
+            return JsonResponse({"message": "Post liked."}, status=201)
+    else:
+        return JsonResponse({"error": "Post does not exist."}, status=400)
+
+
 # It shouldn't be hard to refactor this to support only returning
 # posts from accounts a user follows, or only from a given account.
 # Probably we will need to also give all the comments related to a post.
