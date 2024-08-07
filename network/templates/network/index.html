@@ -34,9 +34,23 @@
     console.log(`User ID: ${userID}`);
   </script>
 {% endif %}
+<script>
+  const profileID = null;
+  const following = false;
+</script>
 {% block script %}
 <script src="{% static 'network/index.js' %}"></script>
+<script src="{% static 'network/postdisplay.js' %}"></script>
 {% endblock %}
+<script>
+  displayPage(1);
+  {% if request.user.is_authenticated %}
+    document.addEventListener('DOMContentLoaded', () => {
+      const btn = document.querySelector("#sendPost");
+      btn.addEventListener("click", sendPost)
+    });
+  {% endif %}
+</script>
 
 {% endblock %}
 

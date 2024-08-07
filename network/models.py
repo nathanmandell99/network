@@ -4,7 +4,7 @@ from django.db import models
 
 class User(AbstractUser):
     following = models.ManyToManyField(
-        "self", blank=True, related_name="followers")
+        "self", blank=True, related_name="followers", symmetrical=False)
     likes = models.ManyToManyField("post", related_name="likers")
 
 

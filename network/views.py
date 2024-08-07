@@ -3,13 +3,35 @@ import json
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.db import IntegrityError
-from django.http import HttpResponseRedirect, JsonResponse
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.core.paginator import Paginator
 
 from .models import User, Post, Comment
+
+
+@login_required
+def following(request):
+    return render(request, "network/following.html")
+
+
+@csrf_exempt
+@login_required
+def follow_user(request, user_id):
+    try:
+        user = User.objects.get(pk=user_id)
+        if user in request.user.following.all():
+            request.user.following.remove(user)
+            return JsonResponse({"message": "Unfollowed user."}, status=201)
+
+        else:
+            request.user.following.add(user)
+            return JsonResponse({"message": "Followed user."}, status=201)
+
+    except User.DoesNotExist:
+        return JsonResponse({"error": "Post does not exist."}, status=400)
 
 
 @csrf_exempt
@@ -27,8 +49,13 @@ def edit_post(request, post_id):
         return JsonResponse({"error": "Post does not exist."}, status=400)
 
 
+# Send the profile of the user in the context
 def user_profile(request, user_id):
-    pass
+    user = User.objects.get(pk=user_id)
+    return render(request, "network/profile.html", {
+        "profile": user,
+        "following": request.user in user.followers.all()
+    })
 
 
 # Get all of the user's likes. If the Post is already there, remove it.
@@ -47,6 +74,7 @@ def like_post(request, post_id):
         else:
             request.user.likes.add(post)
             return JsonResponse({"message": "Post liked."}, status=201)
+
     except Post.DoesNotExist:
         return JsonResponse({"error": "Post does not exist."}, status=400)
 
@@ -55,7 +83,20 @@ def like_post(request, post_id):
 # posts from accounts a user follows, or only from a given account.
 # Probably we will need to also give all the comments related to a post.
 def load_posts(request):
-    posts = Post.objects.all()
+    profile_id = request.GET.get("user")
+    if profile_id is not None:
+        user = User.objects.get(pk=profile_id)
+        posts = user.posts.all()
+
+    elif request.GET.get("following"):
+        users = request.user.following.all()
+        # We have the users we are following. Now we need to get the posts
+        # made by those users.
+        posts = Post.objects.filter(user__in=users)
+
+    else:
+        posts = Post.objects.all()
+
     posts = posts.order_by("-timestamp").all()
     paginator = Paginator(posts, 10)
     page_number = int(request.GET.get("page") or 1)

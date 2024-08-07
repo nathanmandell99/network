@@ -186,3 +186,33 @@ class TestLike(TestCase):
 
         self.assertEqual(result['message'], "Post unliked.")
         self.assertTrue(Post.objects.get(pk=1) not in self.user.likes.all())
+
+
+class TestFollow(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.user1 = User.objects.create(username="test_user1")
+        self.user1.set_password("password")
+        self.user1.save()
+        self.user2 = User.objects.create(username="test_user2")
+        self.user2.set_password("password")
+        self.user2.save()
+
+    def test_follow(self):
+        self.client.login(username="test_user1", password="password")
+        response = self.client.put("/follow/2",
+                                   content_type="application/json")
+        result = json.loads(response.content)
+        self.assertEqual(result['message'], "Followed user.")
+        self.assertTrue(self.user2 in self.user1.following.all())
+        self.assertTrue(self.user1 in self.user2.followers.all())
+
+    def test_unfollow(self):
+        self.test_follow()
+
+        response = self.client.put("/follow/2",
+                                   content_type="application/json")
+        result = json.loads(response.content)
+        self.assertEqual(result['message'], "Unfollowed user.")
+        self.assertTrue(self.user2 not in self.user1.following.all())
+        self.assertTrue(self.user1 not in self.user2.followers.all())

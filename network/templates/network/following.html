@@ -1,0 +1,26 @@
+{% extends "network/layout.html" %}
+{% load static %}
+
+{% block body %}
+
+<div class="container">
+  <h2>Following</h2>
+</div>
+
+<div id="posts-view" class="container">
+</div>
+
+<script>
+  const userID = {{ request.user.id }}
+  console.log(`User ID: ${userID}`)
+  profileID = null;
+  following = true;
+</script>
+
+<script src="{% static 'network/postdisplay.js' %}"></script>
+
+<script>
+  displayPage(1, null, true);
+</script>
+
+{% endblock %}

@@ -1,0 +1,43 @@
+{% extends "network/layout.html" %}
+{% load static %}
+
+{% block body %}
+
+<div id="profile-view" class="container">
+  <h2>{{profile.username}}</h2>
+  <h5>Following: <span id="following-count">{{profile.following.all.count}}</span></h5>
+  <h5>Followers: <span id="followers-count">{{profile.followers.all.count}}</span></h5>
+  {% if profile != request.user %}
+    {% if following %}
+      <input id="unfollow-btn" type="submit" class="btn btn-primary toggle-follow" value="Unfollow"/>
+    {% else %}
+      <input id="follow-btn" type="submit" class="btn btn-primary toggle-follow" value="Follow"/>
+    {% endif %}
+  {% endif %}
+</div>
+
+<div id="posts-view" class="container">
+  <!-- We need the form for creating the new post, as well as a list of posts. -->
+</div>
+
+{% if request.user.is_authenticated %}
+  <script>
+    const userID = {{ request.user.id }}
+    console.log(`User ID: ${userID}`)
+  </script>
+{% else %}
+  <script>
+    const userID = -1;
+    console.log(`User ID: ${userID}`);
+  </script>
+{% endif %}
+
+<script src="{% static 'network/postdisplay.js' %}"></script>
+<script src="{% static 'network/profile.js' %}"></script>
+<script>
+  const profileID = {{profile.id}}
+  const following = false;
+  displayPage(1, profileID, following);
+</script>
+
+{% endblock %}
