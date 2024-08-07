@@ -25,12 +25,12 @@
 
 {% if request.user.is_authenticated %}
   <script>
-    let userID = {{ request.user.id }}
+    const userID = {{ request.user.id }}
     console.log(`User ID: ${userID}`)
   </script>
 {% else %}
   <script>
-    let userID = -1;
+    const userID = -1;
     console.log(`User ID: ${userID}`);
   </script>
 {% endif %}

@@ -20,17 +20,23 @@ class Post(models.Model):
         for user in likesQuery:
             likers.append(user.id)
 
+        commentsQuery = self.comments.all()
+        comments = []
+        for comment in commentsQuery:
+            comments.append(comment.serialize())
+
         return {
             "id": self.id,
             "body": self.body,
             "userID": self.user.id,
             "userName": self.user.username,
             "timestamp": f"{self.timestamp.month}/{self.timestamp.day}/{self.timestamp.year}, {self.timestamp.time().strftime("%H:%M")}",
-            "likes": likers
+            "likes": likers,
+            "comments": comments
         }
 
     def __str__(self):
-        return f"Post by {self.user} on {self.timestamp}"
+        return f"Post by {self.user} on {self.timestamp.month}/{self.timestamp.day}/{self.timestamp.year}, {self.timestamp.time().strftime("%H:%M")}"
 
 
 class Comment(models.Model):
@@ -52,4 +58,4 @@ class Comment(models.Model):
         }
 
     def __str__(self):
-        return f"Comment by {self.user} on {self.post} on {self.timestamp}"
+        return f"Comment by {self.user} on {self.post} on {self.timestamp.month}/{self.timestamp.day}/{self.timestamp.year}, {self.timestamp.time().strftime("%H:%M")}"

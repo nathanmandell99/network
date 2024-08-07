@@ -14,5 +14,6 @@ urlpatterns = [
     path("newpost", views.new_entry, name="newpost"),
     path("newcomment/<int:post_id>", views.new_entry, name="newcomment"),
     path("posts", views.load_posts, name="posts"),
-    path("like/<int:post_id>", views.likepost, name="likepsot")
+    path("like/<int:post_id>", views.like_post, name="likepost"),
+    path("edit/<int:post_id>", views.edit_post, name="editpost")
 ]

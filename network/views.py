@@ -3,7 +3,7 @@ import json
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.db import IntegrityError
-from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
+from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
@@ -12,13 +12,32 @@ from django.core.paginator import Paginator
 from .models import User, Post, Comment
 
 
+@csrf_exempt
+@login_required
+def edit_post(request, post_id):
+    try:
+        post = Post.objects.get(pk=post_id)
+        data = json.loads(request.body)
+        new_body = data.get("new_body")
+        post.body = new_body
+        post.save()
+        return JsonResponse({"message": f"Post {post_id} edited with new body: {new_body}."},
+                            status=201)
+    except Post.DoesNotExist:
+        return JsonResponse({"error": "Post does not exist."}, status=400)
+
+
+def user_profile(request, user_id):
+    pass
+
+
 # Get all of the user's likes. If the Post is already there, remove it.
 # Otherwise, add it.
 @csrf_exempt
 @login_required
-def likepost(request, post_id):
-    post = Post.objects.get(pk=post_id)
-    if post is not None:
+def like_post(request, post_id):
+    try:
+        post = Post.objects.get(pk=post_id)
         # If the user already likes the Post, unlike it.
         if post in request.user.likes.all():
             request.user.likes.remove(post)
@@ -28,7 +47,7 @@ def likepost(request, post_id):
         else:
             request.user.likes.add(post)
             return JsonResponse({"message": "Post liked."}, status=201)
-    else:
+    except Post.DoesNotExist:
         return JsonResponse({"error": "Post does not exist."}, status=400)
 
 

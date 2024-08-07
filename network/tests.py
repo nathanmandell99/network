@@ -33,8 +33,7 @@ class TestNewEntry(TestCase):
 
         self.assertTrue(json.loads(response.content)['error'])
 
-    def test_authentication_required(self):
-        self.client.logout()
+    def test_authentication(self):
 
         response = self.client.post("/newpost",
                                     {"entry_body": "Test!"},
@@ -104,7 +103,9 @@ class TestLoadPosts(TestCase):
         self.assertEqual(count, Post.objects.all().count())
 
         for i in range(0, 10):
-            # cur_post uses 10-i because the sqlite ids are not 0-indexed
+            # cur_post uses 10-i because the route gives us reverse
+            # chronological results and is not 0-indexed, meaning we have to go
+            # "backwards" from 10
             cur_post = Post.objects.get(pk=(10-i))
             self.assertEqual(result['posts'][i]['body'],
                              cur_post.serialize()['body'])
@@ -137,3 +138,51 @@ class TestLoadPosts(TestCase):
             cur_post = Post.objects.get(pk=(20-i))
             self.assertEqual(result['posts'][i]['body'],
                              cur_post.serialize()['body'])
+
+
+class TestLike(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create(username="test_user")
+        self.user.set_password("password")
+        self.user.save()
+        for i in range(0, 10):
+            new_post = Post(user=self.user, body=f"Test post {i}")
+            new_post.save()
+
+    def test_authentication(self):
+        response = self.client.put("/like/1", content_type="application/json")
+
+        self.assertEqual(response.status_code, 302)
+
+    def test_bad_like(self):
+        self.client.login(username="test_user", password="password")
+        response = self.client.put(
+            "/like/100", content_type="application/json")
+
+        self.assertEqual(response.status_code, 400)
+
+    def test_good_like(self):
+        self.client.login(username="test_user", password="password")
+        response = self.client.put(
+            "/like/1", content_type="application/json")
+
+        self.assertEqual(response.status_code, 201)
+
+        result = json.loads(response.content)
+
+        self.assertEqual(result['message'], "Post liked.")
+        self.assertTrue(Post.objects.get(pk=1) in self.user.likes.all())
+
+    def test_unlike(self):
+        self.client.login(username="test_user", password="password")
+        response = self.client.put(
+            "/like/1", content_type="application/json")
+
+        response = self.client.put(
+            "/like/1", content_type="application/json")
+
+        result = json.loads(response.content)
+
+        self.assertEqual(result['message'], "Post unliked.")
+        self.assertTrue(Post.objects.get(pk=1) not in self.user.likes.all())
