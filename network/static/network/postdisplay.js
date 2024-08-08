@@ -1,4 +1,4 @@
-
+// Set up event listeners for liking, editing, and commenting.
 document.addEventListener('DOMContentLoaded', () => {
   if (userID != -1) {
     document.querySelector("#posts-view").addEventListener('click', async (event) => {
@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
           });
           result = await response.json();
 
-          let likeString = document.querySelector(`#id${postID} .card-link`).innerHTML;
+          let likeString = document.querySelector(`#parent${postID} small`).innerHTML;
           let likes = parseInt(likeString.split(/[ ,]+/)[1]);
 
           if (result['message'] === 'Post liked.') {
@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <path fill-rule="evenodd" d="M8 1.314C12.438-3.248 23.534 4.735 8 15-7.534 4.736 3.562-3.248 8 1.314"/>
                   </svg>`;
 
-            document.querySelector(`#id${postID} .card-link`).innerHTML = `Likes: ${++likes}`;
+            document.querySelector(`#parent${postID} small`).innerHTML = `Likes: ${++likes}`;
 
           }
           else if (result['message'] === 'Post unliked.') {
@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <path d="m8 2.748-.717-.737C5.6.281 2.514.878 1.4 3.053c-.523 1.023-.641 2.5.314 4.385.92 1.815 2.834 3.989 6.286 6.357 3.452-2.368 5.365-4.542 6.286-6.357.955-1.886.838-3.362.314-4.385C13.486.878 10.4.28 8.717 2.01zM8 15C-7.333 4.868 3.279-3.04 7.824 1.143q.09.083.176.171a3 3 0 0 1 .176-.17C12.72-3.042 23.333 4.867 8 15"/>
                   </svg>`;
 
-            document.querySelector(`#id${postID} .card-link`).innerHTML = `Likes: ${--likes}`;
+            document.querySelector(`#parent${postID} small`).innerHTML = `Likes: ${--likes}`;
           }
         }
         catch (error) {
@@ -39,42 +39,51 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       else if (event.target.classList.contains('send-comment')) {
         postID = event.target.dataset.postid;
-        console.log(`${postID}`);
         body = document.querySelector(`#comment-form${postID}`);
-        console.log(body.value);
-        console.log("About to send comment");
         sendComment(body, postID);
       }
       else if (event.target.classList.contains('edit-post-btn')) {
         // Add edit button listener
-        console.log(`Edit button clicked`);
-        postID = event.target.dataset.postid;
+        let postID = event.target.dataset.postid;
 
-        postBody = document.querySelector(`#id${postID} p`);
-        console.log(`Body of post: ${postBody.innerHTML}`);
-        postBodyText = postBody.innerHTML;
+        let postBody = document.querySelector(`#id${postID}`);
+        let postBodyText = postBody.innerHTML;
 
-        textArea = document.createElement('textarea');
-        textArea.classList.add('form-control');
-        textArea.value = postBodyText;
-        //textArea.dataset['postid'] = postID;
-        textArea.setAttribute('id', `edit${postID}`)
-        submitBtn = document.createElement(`input`);
-        submitBtn.classList.add('btn', 'btn-primary', 'send-edit-btn');
-        submitBtn.dataset['postid'] = postID;
-        submitBtn.type = 'submit';
-        submitBtn.value = "Submit Edit";
+        let textArea = document.querySelector(`#editbody${postID}`);
+        console.log(`textArea = ${textArea}`);
+        if (textArea) {
+          textArea.style.display = 'block';
+        }
+        else {
+          textArea = document.createElement('textarea');
+          textArea.classList.add('form-control');
+          textArea.value = postBodyText;
+          textArea.setAttribute('id', `editbody${postID}`);
+        }
+        let submitBtn = document.querySelector(`#sbmt-edit${postID}`);
+        if (submitBtn) {
+          submitBtn.style.display = 'block';
+        }
+        else {
+          submitBtn = document.createElement(`input`);
+          submitBtn.classList.add('btn', 'btn-primary', 'send-edit-btn');
+          submitBtn.setAttribute('id', `sbmt-edit${postID}`)
+          submitBtn.dataset['postid'] = postID;
+          submitBtn.type = 'submit';
+          submitBtn.value = "Submit Edit";
+        }
 
         postBody.parentNode.insertBefore(submitBtn, postBody.nextSibling);
         postBody.parentNode.insertBefore(textArea, postBody.nextSibling);
 
         postBody.style.display = 'none';
+        event.target.style.display = 'none';
       }
       else if (event.target.classList.contains('send-edit-btn')) {
         // Get the body of the text area. Submit it to the API route. Reload page.
         postID = event.target.dataset.postid;
         console.log(`Submitting edit for post with ID ${postID}`);
-        textArea = document.querySelector(`#edit${postID}`);
+        textArea = document.querySelector(`#editbody${postID}`);
 
         try {
           let response = await fetch(`/edit/${postID}`, {
@@ -84,7 +93,14 @@ document.addEventListener('DOMContentLoaded', () => {
             })
           });
           result = await response.json();
-          displayPage(1, profileID, following);
+          let postBody = document.querySelector(`#id${postID}`)
+          document.querySelector(`#id${postID}`).innerHTML = textArea.value;
+          textArea.style.display = 'none';
+          postBody.style.display = 'block';
+          document.querySelector(`#id${postID}`).style.display = 'block';
+          event.target.closest(".send-edit-btn").style.display = 'none';
+          document.querySelector(`#edit${postID}`).style.display = 'inline';
+
         }
         catch (error) {
           console.log(`Error: ${error}`);
@@ -97,17 +113,26 @@ document.addEventListener('DOMContentLoaded', () => {
 function displayPost(view, post) {
   // This is a moment in which it is deeply misfortunate we are not using a 
   // front-end framework.
+
+  // Adapted from: https://bbbootstrap.com/snippets/bootstrap-comments-list-font-awesome-icons-and-toggle-button-91650380
   let postHTML = `
-    <div class="card" style="width: 18rem;">
-      <div class="card-body" id="id${post['id']}">
-        <h5 class="card-title"><a href="/profile/${post['userID']}">${post['userName']}</a></h5>
-        <h6 class="card-subtitle mb-2 text-body-secondary">${post['timestamp']}</h6>
-        <p class="card-text">${post['body']}</p>
-        <span class="card-link">Likes: ${post['likes'].length}</span>
+  <div class="card p-3">
+  <div class="d-flex justify-content-between align-items-center">
+    <div class="user d-flex flex-row align-items-center">
+      <span><small class="font-weight-bold text-primary"><a href="/profile/${post['userID']}">${post['userName']}</a></small><p id="id${post['id']}" class="font-weight-bold">${post['body']}</p></span>
+    </div>
+    <small>${post['timestamp']}</small>
+    </div>
+    <div class="action d-flex justify-content-between mt-2 align-items-center">
+      <div class="reply px-4" id="parent${post['id']}">
+        <small>Likes: ${post['likes'].length}</small>
+        <span class="dots></span>
       </div>
-    </div>`;
+    </div>
+  </div>
+    `
   view.innerHTML += postHTML;
-  cardBody = document.getElementById(`id${post['id']}`);
+  cardBody = document.getElementById(`parent${post['id']}`);
 
   // If the user is logged in, display the like button
   if (userID != -1) {
@@ -142,19 +167,6 @@ function displayPost(view, post) {
     cardBody.append(editBtn);
   }
 
-  // If the user is logged in, display comment form
-
-  if (userID != -1) {
-    commentForm = document.createElement('div');
-    commentForm.classList.add('new-comment');
-    commentForm.innerHTML = `
-      <div class="container">
-        <textarea id="comment-form${post['id']}" class="form-control compose-comment" placeholder="Post a comment"></textarea>
-        <input data-postid="${post['id']}" type="submit" class="btn btn-primary send-comment" 
-          value="Post"/>
-      </div>`
-    cardBody.append(commentForm);
-  }
 
   //document.querySelector(`#send-comment${post['id']}`).addEventListener(
   //'click', event => sendComment(document.querySelector(`#compose-comment${post['id']}`), post['id']));
@@ -162,10 +174,24 @@ function displayPost(view, post) {
   // Display all the comments for the post
   if (post['comments'].length > 0) {
     let commentElem = document.createElement('ul');
+    commentElem.classList.add('comments');
     for (let comment of post['comments']) {
-      commentElem.innerHTML += `<li>Comment by ${comment['userName']}: ${comment['body']}</li>`
+      commentElem.innerHTML += `<li>Comment by ${comment['userName']}:<br>${comment['body']}</li>`
     }
     cardBody.append(commentElem);
+  }
+
+  // If the user is logged in, display comment form
+  if (userID != -1) {
+    commentForm = document.createElement('div');
+    commentForm.classList.add('new-comment');
+    commentForm.innerHTML = `
+      <div class="container">
+        <textarea id="comment-form${post['id']}" class="form-control compose-comment" placeholder="Post a comment"></textarea>
+        <input data-postid="${post['id']}" type="submit" class="btn btn-primary send-comment" 
+          value="Post Comment"/>
+      </div>`
+    cardBody.append(commentForm);
   }
 }
 
